@@ -1,0 +1,8 @@
+{
+  "scripts":{"build":"tsc","start":"node dist/server.js"},
+  "dependencies":{
+    "@grpc/grpc-js":"^1.12.6","@grpc/proto-loader":"^0.7.13",
+    "kafkajs":"^2.2.4","pg":"^8.13.1"
+  },
+  "devDependencies":{"@types/node":"^22.10.2","@types/pg":"^8.11.10","typescript":"^5.7.2"}
+}

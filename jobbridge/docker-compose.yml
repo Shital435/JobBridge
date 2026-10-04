@@ -1,0 +1,245 @@
+services:
+
+  # ==========================================================
+  # POSTGRESQL
+  # ==========================================================
+
+  postgres:
+    image: postgres:16-alpine
+
+    environment:
+      POSTGRES_USER: jobbridge
+      POSTGRES_PASSWORD: jobbridge
+      POSTGRES_DB: jobbridge
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U jobbridge -d jobbridge"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ==========================================================
+  # KAFKA
+  # ==========================================================
+
+  kafka:
+    image: bitnamilegacy/kafka:3.8
+
+    ports:
+      - "9092:9092"
+
+    environment:
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+
+
+  # ==========================================================
+  # USER SERVICE
+  # ==========================================================
+
+  user-service:
+    build:
+      context: ./services/user-service
+      provenance: false
+      sbom: false
+
+    environment:
+      PORT: 50051
+      DATABASE_URL: postgresql://jobbridge:jobbridge@postgres:5432/jobbridge
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "50051:50051"
+
+
+  # ==========================================================
+  # JOB SERVICE
+  # ==========================================================
+
+  job-service:
+    build:
+      context: ./services/job-service
+      provenance: false
+      sbom: false
+
+    environment:
+      PORT: 50052
+      DATABASE_URL: postgresql://jobbridge:jobbridge@postgres:5432/jobbridge
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "50052:50052"
+
+
+  # ==========================================================
+  # APPLICATION SERVICE
+  # ==========================================================
+
+  application-service:
+    build:
+      context: ./services/application-service
+      provenance: false
+      sbom: false
+
+    environment:
+      PORT: 50053
+
+      DATABASE_URL: postgresql://jobbridge:jobbridge@postgres:5432/jobbridge
+
+      USER_SERVICE_HOST: user-service:50051
+
+      KAFKA_BROKER: kafka:9092
+
+    depends_on:
+
+      postgres:
+        condition: service_healthy
+
+      kafka:
+        condition: service_started
+
+      user-service:
+        condition: service_started
+
+    ports:
+      - "50053:50053"
+
+
+  # ==========================================================
+  # NOTIFICATION SERVICE
+  # ==========================================================
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      provenance: false
+      sbom: false
+
+    environment:
+
+      PORT: 50054
+
+      DATABASE_URL: postgresql://jobbridge:jobbridge@postgres:5432/jobbridge
+
+      KAFKA_BROKER: kafka:9092
+
+    depends_on:
+
+      postgres:
+        condition: service_healthy
+
+      kafka:
+        condition: service_started
+
+    ports:
+      - "50054:50054"
+
+
+  # ==========================================================
+  # ANALYTICS SERVICE
+  # ==========================================================
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      provenance: false
+      sbom: false
+
+    environment:
+      KAFKA_BROKER: kafka:9092
+
+    depends_on:
+      kafka:
+        condition: service_started
+
+
+  # ==========================================================
+  # API GATEWAY
+  # ==========================================================
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      provenance: false
+      sbom: false
+
+    environment:
+
+      PORT: 4000
+
+      USER_SERVICE_URL: user-service:50051
+
+      JOB_SERVICE_URL: job-service:50052
+
+      APPLICATION_SERVICE_URL: application-service:50053
+
+      NOTIFICATION_SERVICE_URL: notification-service:50054
+
+    depends_on:
+
+      user-service:
+        condition: service_started
+
+      job-service:
+        condition: service_started
+
+      application-service:
+        condition: service_started
+
+      notification-service:
+        condition: service_started
+
+    ports:
+      - "4000:4000"
+
+
+  # ==========================================================
+  # FRONTEND
+  # ==========================================================
+
+  frontend:
+    build:
+      context: ./frontend
+      provenance: false
+      sbom: false
+
+    depends_on:
+      api-gateway:
+        condition: service_started
+
+    ports:
+      - "5173:5173"
+
+
+# ============================================================
+# VOLUMES
+# ============================================================
+
+volumes:
+
+  postgres_data:

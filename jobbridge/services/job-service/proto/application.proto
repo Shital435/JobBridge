@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package application;
+
+service ApplicationService {
+
+  rpc CreateApplication (
+    CreateApplicationRequest
+  ) returns (
+    ApplicationResponse
+  );
+
+  rpc GetMyApplications (
+    GetMyApplicationsRequest
+  ) returns (
+    ApplicationsResponse
+  );
+
+  rpc GetRecruiterApplications (
+    GetRecruiterApplicationsRequest
+  ) returns (
+    ApplicationsResponse
+  );
+
+  rpc UpdateApplicationStatus (
+    UpdateApplicationStatusRequest
+  ) returns (
+    ApplicationResponse
+  );
+}
+
+
+// =====================================================
+// CREATE APPLICATION
+// =====================================================
+
+message CreateApplicationRequest {
+  int32 userId = 1;
+  int32 jobId = 2;
+}
+
+
+// =====================================================
+// GET STUDENT APPLICATIONS
+// =====================================================
+
+message GetMyApplicationsRequest {
+  int32 userId = 1;
+}
+
+
+// =====================================================
+// GET RECRUITER APPLICATIONS
+// =====================================================
+
+message GetRecruiterApplicationsRequest {
+  int32 recruiterId = 1;
+}
+
+
+// =====================================================
+// UPDATE APPLICATION STATUS
+// =====================================================
+
+message UpdateApplicationStatusRequest {
+  int32 applicationId = 1;
+  int32 recruiterId = 2;
+  string status = 3;
+}
+
+
+// =====================================================
+// APPLICATION RESPONSE
+// =====================================================
+
+message ApplicationResponse {
+
+  int32 id = 1;
+
+  int32 userId = 2;
+
+  int32 jobId = 3;
+
+  string status = 4;
+
+  string jobTitle = 5;
+
+  string company = 6;
+
+  string location = 7;
+
+  string type = 8;
+
+  string stipend = 9;
+
+  string appliedAt = 10;
+
+  string candidateName = 11;
+
+  string candidateEmail = 12;
+
+  string candidateSkills = 13;
+
+  // New fields
+  string candidateCgpa = 14;
+
+  string candidateResumeUrl = 15;
+}
+
+
+// =====================================================
+// APPLICATIONS RESPONSE
+// =====================================================
+
+message ApplicationsResponse {
+
+  repeated ApplicationResponse applications = 1;
+}

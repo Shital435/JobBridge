@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package job;
+
+service JobService {
+  rpc GetJob (GetJobRequest) returns (JobResponse);
+  rpc ListJobs (Empty) returns (JobList);
+  rpc CreateJob (CreateJobRequest) returns (JobResponse);
+  rpc GetRecruiterJobs (GetRecruiterJobsRequest) returns (JobList);
+}
+
+message Empty {}
+
+message GetJobRequest {
+  int32 id = 1;
+}
+
+message CreateJobRequest {
+  int32 recruiter_id = 1;
+  string title = 2;
+  string company = 3;
+  string location = 4;
+  string type = 5;
+  string stipend = 6;
+  string description = 7;
+  string skills = 8;
+}
+
+message GetRecruiterJobsRequest {
+  int32 recruiter_id = 1;
+}
+
+message JobResponse {
+  int32 id = 1;
+  string title = 2;
+  string company = 3;
+  string location = 4;
+  string type = 5;
+  string stipend = 6;
+  string description = 7;
+  string skills = 8;
+}
+
+message JobList {
+  repeated JobResponse jobs = 1;
+}

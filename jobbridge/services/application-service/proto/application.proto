@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package application;
+
+service ApplicationService {
+  rpc CreateApplication (CreateApplicationRequest) returns (ApplicationResponse);
+
+  rpc GetMyApplications (GetMyApplicationsRequest) returns (ApplicationList);
+
+  rpc GetRecruiterApplications (GetRecruiterApplicationsRequest) returns (ApplicationList);
+
+  rpc UpdateApplicationStatus (UpdateApplicationStatusRequest) returns (ApplicationResponse);
+}
+
+message CreateApplicationRequest {
+  int32 userId = 1;
+  int32 jobId = 2;
+}
+
+message GetMyApplicationsRequest {
+  int32 userId = 1;
+}
+
+message GetRecruiterApplicationsRequest {
+  int32 recruiterId = 1;
+}
+
+message UpdateApplicationStatusRequest {
+  int32 applicationId = 1;
+  int32 recruiterId = 2;
+  string status = 3;
+}
+
+message ApplicationResponse {
+  int32 id = 1;
+  int32 userId = 2;
+  int32 jobId = 3;
+
+  string status = 4;
+
+  string jobTitle = 5;
+  string company = 6;
+  string location = 7;
+  string type = 8;
+  string stipend = 9;
+  string appliedAt = 10;
+
+  string candidateName = 11;
+  string candidateEmail = 12;
+  string candidateSkills = 13;
+}
+
+message ApplicationList {
+  repeated ApplicationResponse applications = 1;
+}
